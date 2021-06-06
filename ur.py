@@ -64,6 +64,10 @@ def get_bukken(tdfk:str, area:str, cur:Cursor, check_date:str):
     payload = f"rent_low=&rent_high=&floorspace_low=&floorspace_high=&tdfk={tdfk}&area={area}"
     response = requests.request("POST", url, data=payload, headers=headers)
     print(f"get bukken_list: tdfk={tdfk} area={area}")
+    if response.status_code != requests.codes.ok:
+        print(f"error response: [{response.status_code}] {response.text}")
+        return
+
     bukken_list = json.loads(response.text, object_hook=lambda d: SimpleNamespace(**d))
     for bukken in bukken_list:
         if bukken.roomCount > 0:
@@ -129,8 +133,14 @@ def get_rooms(tdfk:str, bukken_id):
     payload = f"rent_low=&rent_high=&floorspace_low=&floorspace_high=&tdfk={tdfk}&mode=init&id={bukken_id}"
     print(f"get room_list: tdfk={tdfk} bukken={bukken_id}")
     response = requests.request("POST", room_list_url, data=payload, headers=headers)
+    if response.status_code != requests.codes.ok:
+        print(f"error response: [{response.status_code}] {response.text}")
+        return []
+        
     rooms_list = json.loads(response.text, object_hook=lambda d: SimpleNamespace(**d))
     return rooms_list
+
+    
 
 def init_db_scheme(name):
     if os.path.isfile(name):
