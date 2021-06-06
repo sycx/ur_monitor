@@ -9,6 +9,10 @@ from auth import (
     access_token_secret
 )
 
+from settings import (
+    DM_RECIPIENT_IDS
+)
+
 
 
 def send_tweet(message:str):
@@ -19,7 +23,22 @@ def send_tweet(message:str):
     access_token_secret
     )
 
-    twitter.update_status(status=message)
+    for id in DM_RECIPIENT_IDS:
+        event = {
+            "type": "message_create",
+            "message_create":{
+                "target": {
+                    "recipient_id": id
+                },
+                "message_data":{
+                    "text": message
+                }
+            }
+        }
+
+        twitter.send_direct_message(event=event)
+    
+    # twitter.update_status(status=message)
     print("Tweeted: %s" % message)
 
 
@@ -59,9 +78,8 @@ def main():
 　　　　{room_rent} {room_type} {room_floorspace}
 　　　　{domain}{room_urlDetail}
 """
-            print(message)
-
-        # sleep(10)
+            send_tweet(message)
+            sleep(3)
 
 
 if __name__ == '__main__':
