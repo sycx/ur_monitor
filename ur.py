@@ -10,6 +10,8 @@ import sqlite3
 import os.path
 import time
 
+import sendTweet
+
 
 #UR api
 url = "https://chintai.sumai.ur-net.go.jp/chintai/api/bukken/search/list_bukken/"
@@ -214,6 +216,8 @@ def main():
     con.commit()
 
     con.close()
+
+    sendTweet.main()
 
 if __name__ == '__main__':
     main()
