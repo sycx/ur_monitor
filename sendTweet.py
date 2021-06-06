@@ -1,6 +1,7 @@
 from html import unescape
 import sqlite3
 from time import sleep
+import logging
 from twython import Twython
 from auth import (
     consumer_key,
@@ -39,7 +40,7 @@ def send_tweet(message:str):
         twitter.send_direct_message(event=event)
     
     # twitter.update_status(status=message)
-    print("Tweeted: %s" % message)
+    logging.info("Tweeted: %s" % message)
 
 
 def main():
@@ -51,7 +52,7 @@ def main():
 
     cur.execute(f"SELECT count(*) from room WHERE is_new_room=1")
     new_room_count=cur.fetchone()[0]
-    print(f"{new_room_count} new room found")
+    logging.info(f"{new_room_count} new room found")
 
     if new_room_count > 0:
         cur.execute(f"SELECT * from room WHERE is_new_room=1")

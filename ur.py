@@ -9,6 +9,7 @@ from enum import Enum
 import sqlite3
 import os.path
 import time
+import logging
 
 import sendTweet
 
@@ -65,9 +66,9 @@ def get_bukken(tdfk:str, area:str, cur:Cursor, check_date:str):
     }
     payload = f"rent_low=&rent_high=&floorspace_low=&floorspace_high=&tdfk={tdfk}&area={area}"
     response = requests.request("POST", url, data=payload, headers=headers)
-    print(f"get bukken_list: tdfk={tdfk} area={area}")
+    logging.info(f"get bukken_list: tdfk={tdfk} area={area}")
     if response.status_code != requests.codes.ok:
-        print(f"error response: [{response.status_code}] {response.text}")
+        logging.error(f"error response: [{response.status_code}] {response.text}")
         return
 
     bukken_list = json.loads(response.text, object_hook=lambda d: SimpleNamespace(**d))
@@ -133,10 +134,10 @@ def get_rooms(tdfk:str, bukken_id):
     'Host': "chintai.sumai.ur-net.go.jp",
     'cache-control': "no-cache"}
     payload = f"rent_low=&rent_high=&floorspace_low=&floorspace_high=&tdfk={tdfk}&mode=init&id={bukken_id}"
-    print(f"get room_list: tdfk={tdfk} bukken={bukken_id}")
+    logging.info(f"get room_list: tdfk={tdfk} bukken={bukken_id}")
     response = requests.request("POST", room_list_url, data=payload, headers=headers)
     if response.status_code != requests.codes.ok:
-        print(f"error response: [{response.status_code}] {response.text}")
+        logging.error(f"error response: [{response.status_code}] {response.text}")
         return []
         
     rooms_list = json.loads(response.text, object_hook=lambda d: SimpleNamespace(**d))
@@ -174,13 +175,16 @@ def init_db_scheme(name):
                 PRIMARY KEY (bukken_id, room_id)
                 )''')
     except sqlite3.Error as e:
-        print(e)
+        logging.error(f"create db error {e}")
     finally:
         if con:
             con.close()
 
 
 def main():
+    logging.basicConfig(filename='ur.log', format='%(asctime)s [%(levelname)s]:%(message)s', level=logging.DEBUG)
+    logging.info('Started')
+
     JST = timezone(timedelta(hours=+9), 'JST')
     date = datetime.now(JST)
     check_date = date.strftime("%B %d, %Y %I:%M%p")
@@ -200,14 +204,14 @@ def main():
     # check result
     cur.execute(f"SELECT count(*) from room WHERE last_check_date='{check_date}' AND is_new_room=1")
     new_room_count=cur.fetchone()[0]
-    print(f"{new_room_count} new room found")
+    logging.info(f"{new_room_count} new room found")
 
     if new_room_count > 0:
         cur.execute(f"SELECT * from room WHERE last_check_date='{check_date}' AND is_new_room=1")
         rows = cur.fetchall()
         for row in rows:
             space=unescape(row[11])
-            print(f"{row[6]}: {row[4]} {row[7]} {row[8]} {row[10]} {space}  {row[13]}")
+            logging.info(f"{row[6]}: {row[4]} {row[7]} {row[8]} {row[10]} {space}  {row[13]}")
 
 
     # mark not exist.
@@ -218,6 +222,9 @@ def main():
     con.close()
 
     sendTweet.main()
+
+    logging.info('Finished')
+
 
 if __name__ == '__main__':
     main()
