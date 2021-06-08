@@ -215,7 +215,7 @@ def main():
 
 
     # mark not exist.
-    cur.execute(f"UPDATE room SET last_check_exist=0  WHERE last_check_date <> '{check_date}'")
+    cur.execute(f"UPDATE room SET last_check_exist=0, is_new_room=0 WHERE last_check_date <> '{check_date}'")
 
     con.commit()
 
