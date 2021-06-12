@@ -55,30 +55,39 @@ def main():
     logging.info(f"{new_room_count} new room found")
 
     if new_room_count > 0:
-        cur.execute(f"SELECT * from room WHERE is_new_room=1")
-        rows = cur.fetchall()
-        for row in rows:
+
+        cur.execute("select *, count(*) as cnt from room where is_new_room=1 group by bukken_id" )
+        group_rows = cur.fetchall()
+
+        
+        for row in group_rows:
+            bid = row[2]
             bukken_url=row[3]
             bukken_name=row[4]
-            room_id=row[6]
-            room_name=row[7]
-            room_rent=row[8]
-            room_commonfee=row[9]
-            room_type=row[10]
-            room_floorspace =unescape(row[11])
-            room_floor=row[12]
-            room_urlDetail=row[13]
-            
-
-            # print(f"{room_id}: {bukken_name} {room_name} {room_rent} {room_type} {room_floorspace}  {room_urlDetail}")
+            bukken_skcs=row[5]
 
             message=f"""空室速報： 
-　物件：「{bukken_name}」
+　物件：{bukken_skcs} 「{bukken_name}」
 　　　　{domain}{bukken_url}
-　空室： 「{room_name}」
-　　　　{room_rent} {room_type} {room_floorspace}
+  空室："""
+
+            cur.execute(f"SELECT * from room WHERE is_new_room=1 AND bukken_id='{bid}'")
+            rows = cur.fetchall()
+            for row in rows:
+                room_id=row[6]
+                room_name=row[7]
+                room_rent=row[8]
+                room_commonfee=row[9]
+                room_type=row[10]
+                room_floorspace =unescape(row[11])
+                room_floor=row[12]
+                room_urlDetail=row[13]
+            
+                message+=f"""
+　「{room_name}」 {room_rent} {room_type} {room_floorspace}
 　　　　{domain}{room_urlDetail}
 """
+            # print(message)
             send_tweet(message)
             sleep(3)
 
